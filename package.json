@@ -1,0 +1,16 @@
+{
+  "name": "youtube-clone-backend",
+  "version": "1.0.0",
+  "description": "a backend youtube like clone",
+  "keywords": [
+    "javascript",
+    "backend"
+  ],
+  "license": "ISC",
+  "author": "Huzaifa",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
