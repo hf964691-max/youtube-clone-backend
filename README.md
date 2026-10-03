@@ -1,36 +1,62 @@
 # YouTube Clone Backend
 
-A JavaScript backend foundation for a YouTube-style application. The project currently includes an Express server setup, MongoDB connection, and common request middleware. Feature routes and API endpoints have not been added yet.
+A Node.js + Express + MongoDB backend for a YouTube-style application. This repository is a backend scaffold and starter project for building a video-sharing platform with authentication, user profiles, video management, subscriptions, likes, comments, playlists, tweets, and dashboard analytics.
 
 ## Tech Stack
 
-- Node.js with ES modules
+- Node.js
 - Express 5
-- MongoDB with Mongoose
-- CORS, cookie-parser, and dotenv
+- MongoDB + Mongoose
+- JWT for authentication
+- Cloudinary for media uploads
+- Multer for file uploads
+- Cookie-based auth support
+- CORS and dotenv
+
+## Current Project Status
+
+This project is in active development. The backend already includes the foundation for a full YouTube-like product, including:
+
+- User registration, login, logout, token refresh, and password changes
+- JWT-based authentication middleware
+- User profile and channel data handling
+- Upload support for avatar and cover images
+- Standardized API response/error utilities
+- Route and controller scaffolding for videos, subscriptions, likes, comments, playlists, tweets, and dashboard stats
+
+Several feature controllers are still in progress and contain TODOs, so the project is best treated as a backend starter or learning project rather than a production-ready application.
 
 ## Prerequisites
 
-- Node.js and npm
-- A MongoDB instance and connection URI
+- Node.js 18+
+- npm
+- MongoDB instance running locally or remotely
+- Cloudinary account (for media uploads)
+
+## Environment Variables
+
+Create a `.env` file in the project root:
+
+```env
+PORT=8000
+MONGODB_URI=mongodb://127.0.0.1:27017
+CORS_ORIGIN=http://localhost:3000
+ACCESS_TOKEN_SECRET=your_access_token_secret
+REFRESH_TOKEN_SECRET=your_refresh_token_secret
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+```
+
+The app appends the database name `videotube` to `MONGODB_URI`, so the example above connects to `mongodb://127.0.0.1:27017/videotube`.
 
 ## Getting Started
 
-Install the project dependencies:
+Install dependencies:
 
 ```bash
 npm install
 ```
-
-Create a `.env` file in the project root for local development:
-
-```env
-MONGODB_URI=mongodb://127.0.0.1:27017
-PORT=8000
-CORS_ORIGIN=http://localhost:3000
-```
-
-The application appends the database name `videotube` to `MONGODB_URI`. For example, the URI above connects to `mongodb://127.0.0.1:27017/videotube`.
 
 Start the development server:
 
@@ -38,54 +64,118 @@ Start the development server:
 npm run dev
 ```
 
-The development script preloads variables from the root `.env` file and restarts the server when source files change. The `npm start` script runs Node.js directly; provide its environment variables through your deployment environment. The current startup code also attempts to load `/env`, so `npm start` does not automatically load the project-root `.env` file.
+Start the server without nodemon:
+
+```bash
+npm start
+```
 
 ## Available Scripts
 
 | Command | Description |
 | --- | --- |
-| `npm run dev` | Run the server with Nodemon and preload `.env` variables. |
-| `npm start` | Run the server directly with Node.js. |
-
-## Current Application Setup
-
-The Express application currently configures:
-
-- CORS using `CORS_ORIGIN`, with credentials enabled
-- JSON and URL-encoded request parsing, limited to 16 KB per body
-- Static file serving from `public/`
-- Cookie parsing
-- MongoDB connection before the server begins listening
-
-No API routes are currently registered, so application endpoints are not available yet.
+| `npm run dev` | Starts the app with nodemon and loads `.env` values. |
+| `npm start` | Starts the app directly with Node.js. |
 
 ## Project Structure
 
 ```text
 src/
-├── app.js                 # Express app and middleware configuration
-├── constants.js           # Shared constants, including the database name
-├── index.js               # Environment setup, database connection, and server startup
-├── controllers/           # Request handlers (planned)
+├── app.js                     # Express app and middleware setup
+├── constants.js               # Shared constants
+├── index.js                   # DB connection and server bootstrap
+├── controllers/               # Route handlers
+│   ├── dashboard.controller.js
+│   ├── user.controller.js
+│   ├── video.controller.js
+│   ├── comment.controller.js
+│   ├── like.controller.js
+│   ├── playlist.controller.js
+│   ├── subscription.controller.js
+│   ├── tweet.controller.js
+│   └── healthcheck.controller.js
 ├── db/
-│   └── index.js            # MongoDB connection
-├── middlewares/           # Custom Express middleware (planned)
-├── models/                # Mongoose models (planned)
-├── routes/                # API routes (planned)
-└── utils/
-	├── ApiError.js         # Custom API error type
-	├── ApiResponse.js      # Standard API response shape
-	└── asyncHandler.js     # Async route-handler utility
+│   └── index.js               # MongoDB connection helper
+├── middlewares/
+│   ├── auth.middleware.js     # JWT verification middleware
+│   └── multer.middleware.js   # File upload middleware
+├── models/
+│   ├── user.model.js
+│   ├── video.model.js
+│   ├── comment.model.js
+│   ├── like.model.js
+│   ├── playlist.model.js
+│   ├── subscription.model.js
+│   └── tweet.model.js
+├── routes/
+│   ├── user.routes.js
+│   ├── dashboard.routes.js
+│   ├── video.routes.js
+│   ├── comment.routes.js
+│   ├── like.routes.js
+│   ├── playlist.routes.js
+│   ├── subscription.routes.js
+│   ├── tweet.routes.js
+│   └── healthcheck.routes.js
+├── utils/
+│   ├── ApiError.js            # Standardized error responses
+│   ├── ApiResponse.js         # Standardized success responses
+│   ├── asyncHandler.js        # Async error wrapper
+│   └── cloudinary.js          # Cloudinary upload utility
+└── public/                    # Static files served by Express
 ```
 
-## Configuration Reference
+## API Routes
 
-| Variable | Required | Description |
+The app currently mounts the user routes at `/api/v1/users`.
+
+### User Routes
+
+| Method | Route | Status |
 | --- | --- | --- |
-| `MONGODB_URI` | Yes | MongoDB connection URI without the database name. |
-| `PORT` | No | HTTP port; defaults to `8000`. |
-| `CORS_ORIGIN` | Yes | Origin allowed to make credentialed cross-origin requests. |
+| `POST` | `/api/v1/users/register` | Implemented |
+| `POST` | `/api/v1/users/login` | Implemented |
+| `POST` | `/api/v1/users/logout` | Implemented |
+| `POST` | `/api/v1/users/refresh-token` | Implemented |
+| `POST` | `/api/v1/users/change-password` | Implemented |
+| `GET` | `/api/v1/users/current-user` | Implemented |
+| `PATCH` | `/api/v1/users/update-account` | Implemented |
+| `PATCH` | `/api/v1/users/avatar` | Implemented |
+| `PATCH` | `/api/v1/users/cover-image` | Implemented |
+| `GET` | `/api/v1/users/c/:username` | Implemented |
+| `GET` | `/api/v1/users/history` | Implemented |
 
-## Project Status
+### Planned Route Modules
 
-This repository is an initial backend scaffold. User authentication, video management, channels, subscriptions, comments, and other application features still need to be implemented.
+These route files exist in the project and outline further feature work:
+
+- `/api/v1/videos` for video upload, retrieval, publishing, and updates
+- `/api/v1/comments` for comments on videos
+- `/api/v1/likes` for like toggling and liked-video queries
+- `/api/v1/playlists` for playlist management
+- `/api/v1/subscriptions` for subscription actions
+- `/api/v1/tweets` for tweet CRUD
+- `/api/v1/dashboard` for channel stats and channel videos
+- `/api/v1/healthcheck` for health verification
+
+## Notes
+
+- The project includes a reusable `asyncHandler` helper to wrap Express route functions.
+- API responses are standardized via `ApiResponse` and `ApiError` utilities.
+- Some route handlers are still scaffolds and are intended to be completed as part of the project build.
+- The app currently does not mount every route defined in `src/routes`, so additional endpoints will need to be registered in `src/app.js` as the backend expands.
+
+## Roadmap
+
+Planned major milestones for this project include:
+
+- Complete video CRUD and publish flow
+- Channel analytics and dashboard endpoints
+- Comment, tweet, subscription, and like logic
+- Playlist creation and management
+- Watch history and user activity tracking
+- Frontend integration with a React or Next.js client
+
+## License
+
+This project is currently unlicensed and intended for learning and experimentation.
