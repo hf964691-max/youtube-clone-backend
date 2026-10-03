@@ -12,8 +12,8 @@ const getAllVideos = asyncHandler(async (req, res) => {
     //TODO: get all videos based on query, sort, pagination
 })
 
-const publishAVideo = asyncHandler(async (req, res) => {
-    const { title, description} = req.body
+const publishVideo = asyncHandler(async (req, res) => {
+    const { title, description } = req.body
     // TODO: get video, upload to cloudinary, create video
 })
 
@@ -39,7 +39,7 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
 
 export {
     getAllVideos,
-    publishAVideo,
+    publishVideo,
     getVideoById,
     updateVideo,
     deleteVideo,

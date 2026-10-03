@@ -3,7 +3,7 @@ import {
     deleteVideo,
     getAllVideos,
     getVideoById,
-    publishAVideo,
+    publishVideo,
     togglePublishStatus,
     updateVideo,
 } from "../controllers/video.controller.js"
@@ -28,7 +28,7 @@ router
             },
             
         ]),
-        publishAVideo
+        publishVideo
     );
 
 router
