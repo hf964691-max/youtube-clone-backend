@@ -6,9 +6,14 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 
-const generateAccessAndRefereshTokens = async (userId) => {
+export const generateAccessAndRefreshTokens = async (userId) => {
   try {
     const user = await User.findById(userId);
+
+    if (!user) {
+      throw new ApiError(404, "User not found");
+    }
+
     const accessToken = user.generateAccessToken();
     const refreshToken = user.generateRefreshToken();
 
@@ -17,9 +22,13 @@ const generateAccessAndRefereshTokens = async (userId) => {
 
     return { accessToken, refreshToken };
   } catch (error) {
+    if (error instanceof ApiError) {
+      throw error;
+    }
+
     throw new ApiError(
       500,
-      "Something went wrong while generating referesh and access token"
+      "Something went wrong while generating refresh and access tokens"
     );
   }
 };
@@ -44,11 +53,11 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new ApiError(400, "All fields are required");
   }
 
-  const existedUser = await User.findOne({
+  const existingUser = await User.findOne({
     $or: [{ username }, { email }],
   });
 
-  if (existedUser) {
+  if (existingUser) {
     throw new ApiError(409, "User with email or username already exists");
   }
   //console.log(req.files);
@@ -95,22 +104,21 @@ const registerUser = asyncHandler(async (req, res) => {
 
   return res
     .status(201)
-    .json(new ApiResponse(200, createdUser, "User registered Successfully"));
+    .json(new ApiResponse(200, createdUser, "User registered successfully"));
 });
 
 const loginUser = asyncHandler(async (req, res) => {
   // req body -> data
   // username or email
-  //find the user
-  //password check
-  //access and referesh token
-  //send cookie
+  // find the user
+  // password check
+  // access and refresh tokens
+  // send cookie
 
   const { email, username, password } = req.body;
-  console.log(email);
 
   if (!username && !email) {
-    throw new ApiError(400, "username or email is required");
+    throw new ApiError(400, "Username or email is required");
   }
 
   // Here is an alternative of above code based on logic discussed in video:
@@ -133,11 +141,11 @@ const loginUser = asyncHandler(async (req, res) => {
     throw new ApiError(401, "Invalid user credentials");
   }
 
-  const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(
+  const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(
     user._id
   );
 
-  const loggedInUser = await User.findById(user._id).select(
+  const currentUser = await User.findById(user._id).select(
     "-password -refreshToken"
   );
 
@@ -154,11 +162,11 @@ const loginUser = asyncHandler(async (req, res) => {
       new ApiResponse(
         200,
         {
-          user: loggedInUser,
+          user: currentUser,
           accessToken,
           refreshToken,
         },
-        "User logged In Successfully"
+        "User logged in successfully"
       )
     );
 });
@@ -185,7 +193,7 @@ const logoutUser = asyncHandler(async (req, res) => {
     .status(200)
     .clearCookie("accessToken", options)
     .clearCookie("refreshToken", options)
-    .json(new ApiResponse(200, {}, "User logged Out"));
+    .json(new ApiResponse(200, {}, "User logged out"));
 });
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
@@ -193,7 +201,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     req.cookies.refreshToken || req.body.refreshToken;
 
   if (!incomingRefreshToken) {
-    throw new ApiError(401, "unauthorized request");
+    throw new ApiError(401, "Unauthorized request");
   }
 
   try {
@@ -217,17 +225,17 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
       secure: true,
     };
 
-    const { accessToken, newRefreshToken } =
-      await generateAccessAndRefereshTokens(user._id);
+    const { accessToken, refreshToken: rotatedRefreshToken } =
+      await generateAccessAndRefreshTokens(user._id);
 
     return res
       .status(200)
       .cookie("accessToken", accessToken, options)
-      .cookie("refreshToken", newRefreshToken, options)
+      .cookie("refreshToken", rotatedRefreshToken, options)
       .json(
         new ApiResponse(
           200,
-          { accessToken, refreshToken: newRefreshToken },
+          { accessToken, refreshToken: rotatedRefreshToken },
           "Access token refreshed"
         )
       );
@@ -325,7 +333,7 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
   const coverImage = await uploadOnCloudinary(coverImageLocalPath);
 
   if (!coverImage.url) {
-    throw new ApiError(400, "Error while uploading on avatar");
+    throw new ApiError(400, "Error while uploading cover image");
   }
 
   const user = await User.findByIdAndUpdate(
@@ -347,10 +355,10 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
   const { username } = req.params;
 
   if (!username?.trim()) {
-    throw new ApiError(400, "username is missing");
+    throw new ApiError(400, "Username is missing");
   }
 
-  const channel = await User.aggregate([
+  const channelProfile = await User.aggregate([
     {
       $match: {
         username: username?.toLowerCase(),
@@ -403,19 +411,23 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
     },
   ]);
 
-  if (!channel?.length) {
-    throw new ApiError(404, "channel does not exists");
+  if (!channelProfile?.length) {
+    throw new ApiError(404, "Channel does not exist");
   }
 
   return res
     .status(200)
     .json(
-      new ApiResponse(200, channel[0], "User channel fetched successfully")
+      new ApiResponse(
+        200,
+        channelProfile[0],
+        "User channel fetched successfully"
+      )
     );
 });
 
 const getWatchHistory = asyncHandler(async (req, res) => {
-  const user = await User.aggregate([
+  const watchHistoryUser = await User.aggregate([
     {
       $match: {
         _id: new mongoose.Types.ObjectId(req.user._id),
@@ -462,7 +474,7 @@ const getWatchHistory = asyncHandler(async (req, res) => {
     .json(
       new ApiResponse(
         200,
-        user[0].watchHistory,
+        watchHistoryUser[0].watchHistory,
         "Watch history fetched successfully"
       )
     );
