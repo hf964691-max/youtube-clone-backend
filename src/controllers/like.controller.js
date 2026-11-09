@@ -76,9 +76,4 @@ const getLikedVideos = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, videos, "Liked videos fetched successfully"));
 });
 
-export {
-  toggleCommentLike,
-  toggleTweetLike,
-  toggleVideoLike,
-  getLikedVideos,
-};
+export { toggleCommentLike, toggleTweetLike, toggleVideoLike, getLikedVideos };
